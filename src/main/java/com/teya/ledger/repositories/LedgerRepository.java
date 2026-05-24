@@ -3,7 +3,6 @@ package com.teya.ledger.repositories;
 import com.teya.ledger.models.TransactionEntry;
 
 import java.math.BigDecimal;
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface LedgerRepository {
