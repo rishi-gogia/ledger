@@ -3,7 +3,10 @@ package com.teya.ledger.controllers;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.teya.ledger.models.TransactionRequest;
 import com.teya.ledger.services.TransactionService;
+import com.teya.ledger.models.TransactionType;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -13,6 +16,7 @@ import java.math.BigDecimal;
 
 import static com.teya.ledger.TestUtils.transaction;
 import static com.teya.ledger.models.TransactionType.DEPOSIT;
+import static com.teya.ledger.models.TransactionType.WITHDRAWAL;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
@@ -35,26 +39,27 @@ class TransactionControllerTest {
         fail("not implemented");
     }
 
-    @Test
-    void testTransaction_validDeposit_returnsCreatedWithBody() throws Exception {
-        // Given a valid deposit request
-        final TransactionRequest request = new TransactionRequest(AMOUNT, DEPOSIT, "deposit");
+    @ParameterizedTest
+    @CsvSource({
+            "1000, DEPOSIT, deposit",
+            "1000, WITHDRAWAL, withdrawal"
+    })
+    void testTransaction_validTransaction_returnsCreatedWithBody(final BigDecimal amount,
+                                                                 final TransactionType transactionType,
+                                                                 final String description) throws Exception {
+        // Given a valid transaction request
+        final TransactionRequest request = new TransactionRequest(amount, transactionType, description);
         when(transactionService.addTransaction(argThat(t ->
-                t.amount().equals(AMOUNT) && t.transactionType() == DEPOSIT
-        ))).thenReturn(transaction(AMOUNT, DEPOSIT, "deposit"));
+                t.amount().equals(amount) && t.transactionType() == transactionType
+        ))).thenReturn(transaction(amount, transactionType, description));
         // When POST /transactions is called
         // Then transaction is created with status 201 CREATED
         mockMvc.perform(post("/transactions")
                         .contentType(APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.amount").value(AMOUNT))
-                .andExpect(jsonPath("$.transactionType").value(DEPOSIT.toString()));
-    }
-
-    @Test
-    void testTransaction_validWithdrawal_returnsCreatedWithBody() {
-        fail("not implemented");
+                .andExpect(jsonPath("$.amount").value(amount))
+                .andExpect(jsonPath("$.transactionType").value(transactionType.toString()));
     }
 
     @Test
