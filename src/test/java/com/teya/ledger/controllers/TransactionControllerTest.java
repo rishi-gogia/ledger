@@ -7,6 +7,9 @@ import com.teya.ledger.models.TransactionType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -17,7 +20,6 @@ import java.math.BigDecimal;
 import com.teya.ledger.exceptions.InsufficientFundsException;
 
 import static com.teya.ledger.TestUtils.transaction;
-import static com.teya.ledger.models.TransactionType.DEPOSIT;
 import static com.teya.ledger.models.TransactionType.WITHDRAWAL;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -44,7 +46,8 @@ class TransactionControllerTest {
     @ParameterizedTest
     @CsvSource({
             "1000, DEPOSIT, deposit",
-            "1000, WITHDRAWAL, withdrawal"
+            "1000, WITHDRAWAL, withdrawal",
+            "1000, DEPOSIT,"
     })
     void testTransaction_validTransaction_returnsCreatedWithBody(final BigDecimal amount,
                                                                  final TransactionType transactionType,
@@ -81,24 +84,48 @@ class TransactionControllerTest {
                 .andExpect(jsonPath("$.description").value("Insufficient funds"));
     }
 
-    @Test
-    void testTransaction_missingAmount_returnsBadRequest() {
-        fail("not implemented");
+    @ParameterizedTest
+    @MethodSource("invalidRequests")
+    void testTransaction_invalidRequest_returnsBadRequest(final String body) throws Exception {
+        // Given an invalid transaction request
+        // When POST /transactions is called
+        // Then 400 Bad Request is returned with VALIDATION_ERROR
+        mockMvc.perform(post("/transactions")
+                        .contentType(APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("VALIDATION_ERROR"));
     }
 
-    @Test
-    void testTransaction_missingType_returnsBadRequest() {
-        fail("not implemented");
-    }
-
-    @Test
-    void testTransaction_negativeAmount_returnsBadRequest() {
-        fail("not implemented");
-    }
-
-    @Test
-    void testTransaction_zeroAmount_returnsBadRequest() {
-        fail("not implemented");
+    private static Stream<String> invalidRequests() {
+        return Stream.of(
+                // No amount
+                """
+                {
+                    "transactionType": "DEPOSIT",
+                    "description": "some description"
+                }""",
+                // No type
+                """
+                {
+                    "amount": "100",
+                    "description": "some description"
+                }""",
+                // Negative amount
+                """
+                {
+                    "amount": "-100",
+                    "transactionType": "DEPOSIT",
+                    "description": "some description"
+                }""",
+                // Zero amount
+                """
+                {
+                    "amount": "0",
+                    "transactionType": "DEPOSIT",
+                    "description": "some description"
+                }"""
+        );
     }
 
     @Test

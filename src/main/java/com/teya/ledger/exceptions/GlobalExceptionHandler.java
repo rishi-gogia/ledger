@@ -18,4 +18,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(UNPROCESSABLE_ENTITY)
                 .body(new ErrorResponse("INSUFFICIENT_FUNDS", exception.getMessage()));
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ErrorResponse> handleValidation(final MethodArgumentNotValidException ex) {
+        final String description = ex.getBindingResult().getFieldErrors().stream()
+                .map(fe -> fe.getField() + ": " + fe.getDefaultMessage())
+                .collect(Collectors.joining(", "));
+        return ResponseEntity.status(BAD_REQUEST)
+                .body(new ErrorResponse("VALIDATION_ERROR", description));
+    }
 }
