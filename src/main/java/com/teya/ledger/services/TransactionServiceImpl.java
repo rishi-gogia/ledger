@@ -1,5 +1,6 @@
 package com.teya.ledger.services;
 
+import com.teya.ledger.exceptions.InsufficientFundsException;
 import com.teya.ledger.models.TransactionEntry;
 import com.teya.ledger.repositories.LedgerRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,11 +16,16 @@ public class TransactionServiceImpl implements TransactionService {
     private final LedgerRepository ledgerRepository;
 
     @Override
-    public TransactionEntry addTransaction(final TransactionEntry transaction) {
+    public synchronized TransactionEntry addTransaction(final TransactionEntry transaction) {
         final BigDecimal accountBalance = ledgerRepository.getBalance();
         final BigDecimal updatedBalance = switch (transaction.transactionType()) {
             case DEPOSIT -> accountBalance.add(transaction.amount());
-            case WITHDRAWAL -> accountBalance.subtract(transaction.amount());
+            case WITHDRAWAL -> {
+                if (accountBalance.compareTo(transaction.amount()) < 0) {
+                    throw new InsufficientFundsException("Insufficient funds");
+                }
+                yield accountBalance.subtract(transaction.amount());
+            }
         };
         return ledgerRepository.addTransaction(transaction, updatedBalance);
     }
