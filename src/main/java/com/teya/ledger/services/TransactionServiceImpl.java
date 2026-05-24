@@ -16,7 +16,12 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public TransactionEntry addTransaction(final TransactionEntry transaction) {
-        return null;
+        final BigDecimal accountBalance = ledgerRepository.getBalance();
+        final BigDecimal updatedBalance = switch (transaction.transactionType()) {
+            case DEPOSIT -> accountBalance.add(transaction.amount());
+            case WITHDRAWAL -> accountBalance.subtract(transaction.amount());
+        };
+        return ledgerRepository.addTransaction(transaction, updatedBalance);
     }
 
     @Override

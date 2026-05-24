@@ -16,14 +16,9 @@ public class LedgerRepositoryImpl implements LedgerRepository {
     }
 
     @Override
-    public TransactionEntry addTransaction(final TransactionEntry transaction) {
-        final BigDecimal currentBalance = account.getBalance();
-        final BigDecimal newBalance = switch (transaction.transactionType()) {
-            case DEPOSIT -> currentBalance.add(transaction.amount());
-            case WITHDRAWAL -> currentBalance.subtract(transaction.amount());
-        };
-        account.applyBalance(newBalance);
+    public TransactionEntry addTransaction(final TransactionEntry transaction, final BigDecimal updatedBalance) {
         account.addTransaction(transaction);
+        account.applyBalance(updatedBalance);
         return transaction;
     }
 
