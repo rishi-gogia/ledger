@@ -14,6 +14,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 
+import com.teya.ledger.exceptions.InsufficientFundsException;
+
 import static com.teya.ledger.TestUtils.transaction;
 import static com.teya.ledger.models.TransactionType.DEPOSIT;
 import static com.teya.ledger.models.TransactionType.WITHDRAWAL;
@@ -63,8 +65,20 @@ class TransactionControllerTest {
     }
 
     @Test
-    void testTransaction_insufficientFunds_returnsUnprocessableEntity() {
-        fail("not implemented");
+    void testTransaction_insufficientFunds_returnsUnprocessableEntity() throws Exception {
+        // Given a withdrawal that exceeds the balance
+        final TransactionRequest request = new TransactionRequest(AMOUNT, WITHDRAWAL, "withdrawal");
+        when(transactionService.addTransaction(argThat(t ->
+                t.amount().equals(AMOUNT) && t.transactionType() == WITHDRAWAL
+        ))).thenThrow(new InsufficientFundsException("Insufficient funds"));
+        // When POST /transactions is called
+        // Then 422 Unprocessable Entity is returned with error body
+        mockMvc.perform(post("/transactions")
+                        .contentType(APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.error").value("INSUFFICIENT_FUNDS"))
+                .andExpect(jsonPath("$.description").value("Insufficient funds"));
     }
 
     @Test
