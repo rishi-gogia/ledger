@@ -1,30 +1,31 @@
 package com.teya.ledger.controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.teya.ledger.exceptions.InsufficientFundsException;
+import com.teya.ledger.models.TransactionEntry;
 import com.teya.ledger.models.TransactionRequest;
-import com.teya.ledger.services.TransactionService;
 import com.teya.ledger.models.TransactionType;
+import com.teya.ledger.services.TransactionService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
-
-import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
-
-import com.teya.ledger.exceptions.InsufficientFundsException;
+import java.util.List;
+import java.util.stream.Stream;
 
 import static com.teya.ledger.TestUtils.transaction;
+import static com.teya.ledger.models.TransactionType.DEPOSIT;
 import static com.teya.ledger.models.TransactionType.WITHDRAWAL;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.when;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -39,8 +40,14 @@ class TransactionControllerTest {
     private static final BigDecimal AMOUNT = BigDecimal.valueOf(100);
 
     @Test
-    void testGetBalance_returnsOkWithBalance() {
-        fail("not implemented");
+    void testGetBalance_returnsOkWithBalance() throws Exception {
+        // Given an account with a certain balance
+        when(transactionService.getBalance()).thenReturn(AMOUNT);
+        // When GET /balance is called
+        // Then the balance is returned with status 200 OK
+        mockMvc.perform(get("/balance"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.balance").value(AMOUNT));
     }
 
     @ParameterizedTest
@@ -129,12 +136,31 @@ class TransactionControllerTest {
     }
 
     @Test
-    void testListTransactions_returnsOkWithTransactionList() {
-        fail("not implemented");
+    void testListTransactions_returnsOkWithTransactionList() throws Exception {
+        // Given an account with transactions
+        final List<TransactionEntry> transactionList = List.of(
+                transaction(BigDecimal.TEN, DEPOSIT, "deposit 1"),
+                transaction(BigDecimal.ONE, WITHDRAWAL, "withdrawal 1")
+        );
+        when(transactionService.getTransactionList()).thenReturn(transactionList);
+        // When GET /transactions is called
+        // Then the full transaction list is returned with status 200 OK
+        mockMvc.perform(get("/transactions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$[0].transactionType").value(DEPOSIT.toString()))
+                .andExpect(jsonPath("$[1].transactionType").value(WITHDRAWAL.toString()));
     }
 
     @Test
-    void testListTransactions_returnsEmptyList() {
-        fail("not implemented");
+    void testListTransactions_returnsEmptyList() throws Exception {
+        // Given an account with no transactions
+        when(transactionService.getTransactionList()).thenReturn(List.of());
+        // When GET /transactions is called
+        // Then an empty list is returned with status 200 OK
+        mockMvc.perform(get("/transactions"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$").isArray())
+                .andExpect(jsonPath("$").isEmpty());
     }
 }
