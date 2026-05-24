@@ -17,7 +17,6 @@ import static com.teya.ledger.models.TransactionType.DEPOSIT;
 import static com.teya.ledger.models.TransactionType.WITHDRAWAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -116,6 +115,11 @@ class TransactionServiceImplTest {
 
     @Test
     void testGetBalance_returnsBalance() {
-        fail("not implemented");
+        // Given there is an account with a certain balance
+        when(ledgerRepository.getBalance()).thenReturn(AMOUNT);
+        // When the balance is fetched
+        final BigDecimal result = transactionService.getBalance();
+        // Then the correct balance is retrieved
+        assertThat(result).isEqualTo(AMOUNT);
     }
 }

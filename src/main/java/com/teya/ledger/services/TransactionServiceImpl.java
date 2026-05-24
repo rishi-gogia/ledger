@@ -37,6 +37,6 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public BigDecimal getBalance() {
-        return null;
+        return ledgerRepository.getBalance();
     }
 }
