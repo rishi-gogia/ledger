@@ -22,7 +22,7 @@ public class LedgerRepositoryImpl implements LedgerRepository {
 
     @Override
     public List<TransactionEntry> getTransactions() {
-        return null;
+        return account.getTransactionsList();
     }
 
     @Override

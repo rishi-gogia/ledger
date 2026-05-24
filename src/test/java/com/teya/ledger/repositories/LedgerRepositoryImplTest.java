@@ -3,7 +3,10 @@ package com.teya.ledger.repositories;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.teya.ledger.models.TransactionEntry;
+
 import java.math.BigDecimal;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -38,7 +41,11 @@ class LedgerRepositoryImplTest {
 
     @Test
     void testGetBalance_noTransactions_returnsEmptyTransactionList() {
-        fail("not implemented");
+        // Given a ledger without any transactions
+        // When transaction list is fetched
+        final List<TransactionEntry> transactions = ledgerRepository.getTransactions();
+        // Then the list is empty
+        assertThat(transactions).isEmpty();
     }
 
     @Test
