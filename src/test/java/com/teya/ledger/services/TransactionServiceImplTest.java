@@ -2,9 +2,12 @@ package com.teya.ledger.services;
 
 import com.teya.ledger.exceptions.InsufficientFundsException;
 import com.teya.ledger.models.TransactionEntry;
+import com.teya.ledger.models.TransactionType;
 import com.teya.ledger.repositories.LedgerRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -23,10 +26,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class TransactionServiceImplTest {
 
-    private static final BigDecimal INITIAL_BALANCE = BigDecimal.valueOf(1000);
     private static final BigDecimal AMOUNT = BigDecimal.valueOf(100);
     private static final String DESCRIPTION_DEPOSIT = "deposit";
     private static final String DESCRIPTION_WITHDRAW = "withdraw";
+    private static final String DESCRIPTION_INVALID = "Invalid amount";
 
     @Mock
     private LedgerRepository ledgerRepository;
@@ -34,57 +37,40 @@ class TransactionServiceImplTest {
     @InjectMocks
     private TransactionServiceImpl transactionService;
 
-    @Test
-    void testAddTransaction_deposit_updatesBalance() {
+    @ParameterizedTest
+    @CsvSource({
+            "1000, 100, DEPOSIT, depositing, 1100",
+            "1000, 100, WITHDRAWAL, withdrawing, 900",
+            "1000, 1000, WITHDRAWAL, withdrawing, 0",
+            "0, 100, DEPOSIT, depositing, 100"
+    })
+    void testAddTransaction_transact_validAmountUpdatesBalance(final BigDecimal initialBalance,
+                                                               final BigDecimal amount,
+                                                               final TransactionType transactionType,
+                                                               final String description,
+                                                               final BigDecimal balance) {
+        // Given an account with some initial balance
+        when(ledgerRepository.getBalance()).thenReturn(initialBalance);
+        // When a valid transaction happens
+        final TransactionEntry entry = transaction(amount, transactionType, description);
+        transactionService.addTransaction(entry);
+        // Then the ledger repo is called to update the balance
+        verify(ledgerRepository).addTransaction(entry, balance);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "1000, 1100",
+            "0, 1"
+    })
+    void testAddTransaction_withdraw_insufficientBalanceThrowsException(final BigDecimal initialBalance,
+                                                                        final BigDecimal withdrawAmount) {
         // Given an account with initial balance
-        when(ledgerRepository.getBalance()).thenReturn(INITIAL_BALANCE);
-        // When a deposit transaction is made
-        final TransactionEntry deposit = transaction(AMOUNT, DEPOSIT, DESCRIPTION_DEPOSIT);
-        transactionService.addTransaction(deposit);
-        // Then ledger is updated with the correct new balance
-        verify(ledgerRepository).addTransaction(deposit, BigDecimal.valueOf(1100));
-    }
-
-    @Test
-    void testAddTransaction_withdrawal_updatesBalance() {
-        // Given an account with initial balance
-        when(ledgerRepository.getBalance()).thenReturn(INITIAL_BALANCE);
-        // When a withdrawal transaction is made
-        final TransactionEntry withdrawal = transaction(AMOUNT, WITHDRAWAL, DESCRIPTION_WITHDRAW);
-        transactionService.addTransaction(withdrawal);
-        // Then ledger is updated with the correct new balance
-        verify(ledgerRepository).addTransaction(withdrawal, BigDecimal.valueOf(900));
-    }
-
-    @Test
-    void testAddTransaction_withdrawal_exactBalance_succeeds() {
-        // Given an account where withdrawal amount equals the balance
-        when(ledgerRepository.getBalance()).thenReturn(AMOUNT);
-        // When a withdrawal transaction is made for the exact balance
-        final TransactionEntry withdrawal = transaction(AMOUNT, WITHDRAWAL, DESCRIPTION_WITHDRAW);
-        transactionService.addTransaction(withdrawal);
-        // Then ledger is updated with zero balance
-        verify(ledgerRepository).addTransaction(withdrawal, BigDecimal.ZERO);
-    }
-
-    @Test
-    void testAddTransaction_withdrawal_insufficientFunds_throwsException() {
-        // Given an account with insufficient balance
-        when(ledgerRepository.getBalance()).thenReturn(AMOUNT);
+        when(ledgerRepository.getBalance()).thenReturn(initialBalance);
         // When a withdrawal transaction exceeds the balance
-        final TransactionEntry withdrawal = transaction(BigDecimal.valueOf(200), WITHDRAWAL, DESCRIPTION_WITHDRAW);
+        final TransactionEntry withdraw = transaction(withdrawAmount, WITHDRAWAL, DESCRIPTION_INVALID);
         // Then an InsufficientFundsException is thrown
-        assertThrows(InsufficientFundsException.class, () -> transactionService.addTransaction(withdrawal));
-    }
-
-    @Test
-    void testAddTransaction_withdrawal_onEmptyLedger_throwsException() {
-        // Given an account with no balance
-        when(ledgerRepository.getBalance()).thenReturn(BigDecimal.ZERO);
-        // When a withdrawal transaction is attempted
-        final TransactionEntry withdrawal = transaction(AMOUNT, WITHDRAWAL, DESCRIPTION_WITHDRAW);
-        // Then an InsufficientFundsException is thrown
-        assertThrows(InsufficientFundsException.class, () -> transactionService.addTransaction(withdrawal));
+        assertThrows(InsufficientFundsException.class, () -> transactionService.addTransaction(withdraw));
     }
 
     @Test
