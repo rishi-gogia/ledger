@@ -9,6 +9,12 @@ import java.util.List;
 @Repository
 public class LedgerRepositoryImpl implements LedgerRepository {
 
+    private final Account account;
+
+    public LedgerRepositoryImpl() {
+        account = new Account();
+    }
+
     @Override
     public TransactionEntry addTransaction(final TransactionEntry transaction) {
         return null;
@@ -21,6 +27,6 @@ public class LedgerRepositoryImpl implements LedgerRepository {
 
     @Override
     public BigDecimal getBalance() {
-        return null;
+        return account.getBalance();
     }
 }
