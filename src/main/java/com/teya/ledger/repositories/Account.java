@@ -17,7 +17,7 @@ public class Account {
     private final String name;
     private final List<TransactionEntry> transactions;
     @Getter
-    private BigDecimal balance;
+    private volatile BigDecimal balance;
 
     public Account() {
         this.id = UUID.randomUUID();
