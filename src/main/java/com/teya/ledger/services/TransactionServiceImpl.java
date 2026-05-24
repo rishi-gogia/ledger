@@ -32,7 +32,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public List<TransactionEntry> getTransactionList() {
-        return null;
+        return ledgerRepository.getTransactions();
     }
 
     @Override

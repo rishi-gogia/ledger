@@ -10,10 +10,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import static com.teya.ledger.TestUtils.transaction;
 import static com.teya.ledger.models.TransactionType.DEPOSIT;
 import static com.teya.ledger.models.TransactionType.WITHDRAWAL;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.Mockito.verify;
@@ -88,12 +90,28 @@ class TransactionServiceImplTest {
 
     @Test
     void testGetTransactionList_returnsTransactionList() {
-        fail("not implemented");
+        // Given a list of transactions performed in an account
+        final List<TransactionEntry> transactionEntries = List.of(
+                transaction(AMOUNT, DEPOSIT, DESCRIPTION_DEPOSIT),
+                transaction(AMOUNT, DEPOSIT, DESCRIPTION_DEPOSIT),
+                transaction(AMOUNT, WITHDRAWAL, DESCRIPTION_WITHDRAW)
+        );
+        when(ledgerRepository.getTransactions()).thenReturn(transactionEntries);
+        // When transaction list is fetched
+        final List<TransactionEntry> result = transactionService.getTransactionList();
+        // Then transactions list is retrieved fully
+        assertThat(result).hasSize(transactionEntries.size());
+        assertThat(result).containsAll(transactionEntries);
     }
 
     @Test
     void testGetTransactionList_returnsEmptyList() {
-        fail("not implemented");
+        // Given there are no transactions for an account
+        when(ledgerRepository.getTransactions()).thenReturn(List.of());
+        // When transaction list is fetched
+        final List<TransactionEntry> result = transactionService.getTransactionList();
+        // Then no transactions are present in the result
+        assertThat(result).isEmpty();
     }
 
     @Test
