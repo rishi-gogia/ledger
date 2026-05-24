@@ -4,9 +4,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import com.teya.ledger.models.TransactionEntry;
+import com.teya.ledger.models.TransactionType;
 
 import java.math.BigDecimal;
 import java.util.List;
+
+import static com.teya.ledger.models.TransactionType.DEPOSIT;
+import static com.teya.ledger.models.TransactionType.WITHDRAWAL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -22,7 +26,14 @@ class LedgerRepositoryImplTest {
 
     @Test
     void testAddTransaction_deposit_updatesBalance() {
-        fail("not implemented");
+        // Given a ledger and a deposit transaction
+        final TransactionEntry entry = new TransactionEntry(BigDecimal.valueOf(100), DEPOSIT, "deposit");
+        // When transaction is added
+        final TransactionEntry result = ledgerRepository.addTransaction(entry);
+        // Then transaction is stored and balance is updated
+        assertThat(result).isEqualTo(entry);
+        assertThat(ledgerRepository.getTransactions()).contains(entry);
+        assertThat(ledgerRepository.getBalance()).isEqualTo(BigDecimal.valueOf(100));
     }
 
     @Test
