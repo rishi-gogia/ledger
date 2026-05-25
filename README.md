@@ -54,7 +54,7 @@ Content-Type: application/json
 ```bash
 curl -s -X POST http://localhost:8080/transactions \
   -H "Content-Type: application/json" \
-  -d '{"amount": 500.00, "type": "DEPOSIT", "description": "Initial deposit"}'
+  -d '{"amount": 500.00, "transactionType": "DEPOSIT", "description": "Initial deposit"}'
 ```
 
 ```json
@@ -71,7 +71,7 @@ curl -s -X POST http://localhost:8080/transactions \
 ```bash
 curl -s -X POST http://localhost:8080/transactions \
   -H "Content-Type: application/json" \
-  -d '{"amount": 100.00, "type": "WITHDRAWAL", "description": "Coffee"}'
+  -d '{"amount": 100.00, "transactionType": "WITHDRAWAL", "description": "Coffee"}'
 ```
 
 ```json

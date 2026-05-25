@@ -19,7 +19,7 @@ class LedgerRepositoryImplTest {
 
     private  static final BigDecimal AMOUNT = BigDecimal.valueOf(100);
     private  static final BigDecimal BALANCE_100 = BigDecimal.valueOf(100);
-    private  static final BigDecimal BALANCE_200 = BigDecimal.valueOf(100);
+    private  static final BigDecimal BALANCE_200 = BigDecimal.valueOf(200);
 
     private LedgerRepository ledgerRepository;
 
